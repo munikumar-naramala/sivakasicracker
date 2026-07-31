@@ -119,7 +119,7 @@ On MilesWeb (typical shared hosting), environment variables usually aren't set p
 - **`place-order.php`** — becomes a cart review + customer-details page: line items sourced from `Cart` (session-backed `product_id => qty`), quantity adjustable per row, prices/names read-only (never editable inputs — closes the tampering surface in `SECURITY_REVIEW.md` §1), customer detail fields, single "Place Order" submit to `processorder.php`. This replaces the current single 764-line form listing the entire catalog with quantity boxes.
 - **`processorder.php`** — validates customer fields (`filter_var(..., FILTER_VALIDATE_EMAIL)`, required-field checks), builds an `Order` **from server-side `Product` prices only**, persists it, sends templated emails via `Mailer`, redirects to `order-placed.php?order=<order_number>`.
 - **`order-placed.php`** — looks up the just-created order by `order_number` and actually displays what was ordered (fixes the Phase 1 finding that this page currently shows generic static text only).
-- **`contact.php`** *(pending your decision)* — if rebuilt: simple validated form → `contact_messages` table + optional notification email, replacing the currently dead `forms/contact.php`.
+- **`contact.php`** *(confirmed — to be rebuilt)* — validated form (name, email, phone, subject, message) → `contact_messages` table, plus a notification email to the shop owner via `Mailer`. Replaces the currently dead `forms/contact.php`, which referenced a vendor library that doesn't exist and was never reachable from any live page.
 
 ### Admin panel (`admin/`)
 

@@ -171,9 +171,9 @@ This is a rough sizing for planning purposes, not a committed schedule — actua
 
 ## Open Questions for Owner Sign-off Before Phase 2
 
-1. **Price discrepancies** (e.g. "2.75 Kurvi" ₹50/₹10 vs ₹40/₹8): which figure is correct? All 177 products in `place-order.php` should be treated as needing a full price audit against current reality, not just this one example.
-2. **Category taxonomy**: confirm the category list to use (CLAUDE.md suggests Gift Boxes, Sparklers, Flower Pots, Rockets, Bombs, Ground Chakkars, Kids Crackers, Fancy Crackers, New Arrivals) and who will assign the ~176 products to them.
-3. **Dead files**: approve deletion of `under-construction.php`, `under-construction-page.php`, `slideshow.php`, `forms/contact.php`, and the commented-out legacy array in `place-order.php` (Rule 2 requires explicit approval before removing anything).
-4. **The 3 discontinued products** (commented out in `price-list.php:2298-2335`) and 1 in `place-order.php:224` — drop entirely, or migrate as `status = hidden/discontinued`?
-5. **Contact form**: since `forms/contact.php` is currently dead/broken and not linked, confirm whether a working contact form should be (re)built as part of this project (CLAUDE.md lists `contact_messages` as a table, implying yes).
-6. **MilesWeb plan specifics**: PHP version available, whether cron is available (for scheduled reports), mail sending method (built-in `mail()` vs SMTP relay) — needs confirming with the hosting account before Phase 2 finalizes the stack assumptions.
+1. ✅ **Resolved** — **Price discrepancies**: `place-order.php`'s `$prodarray` confirmed as the correct/authoritative price source for all 177 products. Used as-is for `database/seed_products.sql`.
+2. ✅ **Resolved** — **Category taxonomy**: CLAUDE.md's suggested list used; all 177 products best-effort assigned (see `DATABASE_DESIGN.md` §4). Flagged for owner review/correction in the admin panel post-launch, not blocking.
+3. ✅ **Resolved** — **Dead files**: `under-construction.php`, `under-construction-page.php`, `slideshow.php`, `forms/contact.php`, and all commented-out legacy code (old `$prodarray` block, 3 discontinued products in `price-list.php`, 1 in `place-order.php`) deleted.
+4. ✅ **Resolved** — discontinued/commented products dropped entirely (not migrated as hidden), per the "remove commented code" approval.
+5. ✅ **Resolved** — **Contact form**: confirmed in scope, to be rebuilt against the `contact_messages` table (see `IMPLEMENTATION_PLAN.md`).
+6. ⏳ **Still open** — **MilesWeb plan specifics**: PHP version, cron availability, and `mail()` deliverability still need confirming once the database/hosting access is in hand — tracked as the pre-migration checklist in `MIGRATION_PLAN.md` §1. Database itself: owner is creating it and will provide credentials; implementation is paused until they're available.

@@ -62,7 +62,7 @@ Generic key-value table rather than one column per setting. CLAUDE.md's Website 
 Covers both the "Festival Banner" and "Header Banner" mentioned in Website Settings, plus a general hero banner, distinguished by `position`. `starts_at`/`ends_at` let a festival banner be scheduled in advance and expire automatically without an admin having to remember to remove it.
 
 ### `contact_messages`
-Currently there is no working contact form (Phase 1 finding: `forms/contact.php` is dead/broken code, now removed). This table exists so a rebuilt contact form (pending your decision — see the open question from Phase 1) has somewhere to land; `is_read` supports a simple inbox view in the admin panel.
+Currently there is no working contact form (Phase 1 finding: `forms/contact.php` was dead/broken code, now removed). A working contact form is confirmed in scope for this project — this table is where it lands; `is_read` supports a simple inbox view in the admin panel.
 
 ### `audit_logs`
 Addresses the Phase 1 finding that today, prices/stock can be changed by anyone with FTP access with zero record of who changed what, when. Every admin write action should insert one row here (`action`, `entity_type`, `entity_id`, JSON `details` of what changed).
