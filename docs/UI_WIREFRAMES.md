@@ -53,7 +53,8 @@ Product card:
 │    [image]        │  lazy-loaded (loading="lazy")
 │  Product Name      │
 │  ~~₹MRP~~  ₹Final  │  final price = calculated (DATABASE_DESIGN.md)
-│  [Out of Stock ▨]  │  ← badge only when status != available
+│  [– 1 +] [Add to Cart] │  ← disabled/replaced by badge when status != available
+│  [Out of Stock ▨]  │
 └──────────────────┘
 ```
 
@@ -103,7 +104,7 @@ Mobile: card grid drops from 4 → 2 → 1 columns; category becomes a `<select>
 
 Price/name fields are **display-only** (no editable inputs impersonating the price — closes the tampering surface documented in `SECURITY_REVIEW.md` §1). Quantity stepper is the only input per line.
 
-If browsing pages gain real "Add to Cart" buttons (the recommended flow flagged in `IMPLEMENTATION_PLAN.md` §4), this page becomes a cart review rather than the entire catalog re-rendered as a form — pending your sign-off.
+Reached via "Add to Cart" buttons on `price-list.php` / `products-show.php` (confirmed flow — see `IMPLEMENTATION_PLAN.md` §4): this page is a cart review, not the entire catalog re-rendered as a form.
 
 ---
 
