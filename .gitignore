@@ -17,6 +17,7 @@ uploads/categories/*
 
 logs/*
 !logs/.gitkeep
+!logs/.htaccess
 
 config/database.php
 .env

@@ -14,6 +14,17 @@ define('BASE_PATH', dirname(__DIR__));
 define('SITE_URL', (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 'https://' : 'http://')
     . ($_SERVER['HTTP_HOST'] ?? 'localhost'));
 
+// Uncaught exceptions get logged in full, but visitors only ever see a
+// generic message — never a stack trace or file path.
+set_exception_handler(function (Throwable $e) {
+    error_log('Uncaught: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+    http_response_code(500);
+    echo '<!DOCTYPE html><html><head><title>Something went wrong</title></head>'
+        . '<body style="font-family:sans-serif; text-align:center; padding:60px;">'
+        . '<h2>Something went wrong</h2><p>Please try again in a moment. If this keeps happening, contact us.</p>'
+        . '</body></html>';
+});
+
 spl_autoload_register(function ($class) {
     $path = BASE_PATH . '/classes/' . $class . '.php';
     if (is_file($path)) {

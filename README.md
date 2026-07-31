@@ -2,6 +2,30 @@
 
 Data-driven rewrite of the sivakasicracker.com storefront. See [`docs/`](docs/) for the full modernization plan, database design, and implementation plan.
 
+## Status (as of 2026-07-31)
+
+**Database:** created on MilesWeb, schema + all 4 seed files imported via phpMyAdmin. Live and populated.
+
+**Built and pushed to `main`:**
+- Public site: `index.php`, `price-list.php`, `products-show.php`, `contact.php` — all data-driven, category filters, search, Add to Cart
+- Order flow: `place-order.php` (cart review) → `processorder.php` (server-side pricing, DB persistence) → `order-placed.php` (real order lookup, session-gated so order URLs aren't guessable)
+- Admin panel (`admin/`): auth (+ `setup.php` one-time first-account creation), Dashboard, Products, Categories, Orders, Banners, Settings, Users, Reports, Contact Messages — all modules from the CLAUDE.md spec
+- Security pass: CSRF on every POST handler (verified — none missing), all SQL via PDO prepared statements (verified — no string-concatenated queries), output escaping audited (no unescaped user/DB data found), rate limiting on order/contact/login forms, validated image uploads (MIME allowlist + GD re-encode + random filenames), `.htaccess` protection on `uploads/`, `config/`, `classes/`, `database/`, `templates/`, `logs/`, `includes/`, `admin/includes/` (deny direct web access / no PHP execution), generic error page for uncaught exceptions (no stack traces to visitors)
+
+## TODO — pick up here next session
+
+- [ ] **Upload the current code to `public_html`** — nothing has been tested on the live server yet beyond the DB import
+- [ ] Browse the live site (home, price list, product gallery, category filters, search)
+- [ ] Add items to cart and place a real test order end-to-end
+- [ ] Confirm the order confirmation email actually arrives (MilesWeb's `mail()` deliverability is unconfirmed — may need SMTP instead, see `docs/SECURITY_REVIEW.md`)
+- [ ] Run `admin/setup.php` to create the first admin account, then **delete `admin/setup.php` from the server**
+- [ ] Test the full admin panel: add/edit a product (incl. image upload), add/edit a category, update an order status, edit Settings, add a banner, check Reports/CSV export
+- [ ] Confirm MilesWeb's PHP version (code targets PHP 8.0+, avoids 8.1-only syntax defensively, but hasn't been confirmed against the actual host)
+- [ ] Confirm whether cron is available (only needed for future scheduled-report ideas, not a blocker)
+- [ ] Review the auto-assigned product categories via Admin → Products — `seed_products.sql`'s category mapping was a best-effort classification (see `docs/DATABASE_DESIGN.md` §4), not manually verified per product
+- [ ] Once SSL is confirmed working, uncomment the HTTPS-redirect block in the root `.htaccess`
+- [ ] Decide whether to keep or further customize the new UI styling (current pass is functional/modern but hasn't had a dedicated design review)
+
 ## Admin Panel
 
 ### First-time setup
