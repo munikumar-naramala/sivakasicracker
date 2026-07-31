@@ -184,4 +184,31 @@ class Order
         $stmt->execute(['from' => $dateFrom . ' 00:00:00', 'to' => $dateTo . ' 23:59:59']);
         return (float) $stmt->fetchColumn();
     }
+
+    public static function mostOrderedProductsBetween(string $dateFrom, string $dateTo, int $limit = 10): array
+    {
+        $stmt = Database::connection()->prepare(
+            'SELECT product_name_snapshot AS name, SUM(quantity) AS total_quantity, SUM(line_total) AS total_revenue
+             FROM order_items oi
+             JOIN orders o ON o.id = oi.order_id
+             WHERE o.status != "cancelled" AND o.created_at BETWEEN :from AND :to
+             GROUP BY product_name_snapshot
+             ORDER BY total_quantity DESC
+             LIMIT :limit'
+        );
+        $stmt->bindValue(':from', $dateFrom . ' 00:00:00');
+        $stmt->bindValue(':to', $dateTo . ' 23:59:59');
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
+    public static function countBetween(string $dateFrom, string $dateTo): int
+    {
+        $stmt = Database::connection()->prepare(
+            'SELECT COUNT(*) FROM orders WHERE created_at BETWEEN :from AND :to'
+        );
+        $stmt->execute(['from' => $dateFrom . ' 00:00:00', 'to' => $dateTo . ' 23:59:59']);
+        return (int) $stmt->fetchColumn();
+    }
 }

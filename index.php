@@ -7,6 +7,8 @@ $businessName = Setting::get('business_name');
 $aboutHeading = Setting::get('about_heading');
 $aboutText = Setting::get('about_text');
 $featuredProducts = Product::getFeatured(8);
+$heroBanners = Banner::activeByPosition('hero');
+$festivalBanners = Banner::activeByPosition('festival');
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -19,13 +21,31 @@ $featuredProducts = Product::getFeatured(8);
 
   <?php include __DIR__ . '/includes/header.php'; ?>
 
-  <!-- ======= Hero Section ======= -->
-  <section id="hero" class="d-flex align-items-center">
-    <div class="container" data-aos="zoom-out" data-aos-delay="100">
-      <h1>Welcome to <span><?= e($businessName) ?></span></h1>
-      <h2>We are a leading online Fireworks seller in India. Through our agencies we supply to most of the states in India.</h2>
+  <?php if (!empty($festivalBanners)): ?>
+    <div class="festival-banner">
+      <?php $festivalBanner = $festivalBanners[0]; ?>
+      <?php if ($festivalBanner['link_url']): ?><a href="<?= e($festivalBanner['link_url']) ?>"><?php endif; ?>
+        <img src="<?= e($festivalBanner['image_path']) ?>" alt="<?= e($festivalBanner['title']) ?>" style="width:100%; display:block;">
+      <?php if ($festivalBanner['link_url']): ?></a><?php endif; ?>
     </div>
-  </section><!-- End Hero -->
+  <?php endif; ?>
+
+  <!-- ======= Hero Section ======= -->
+  <?php if (!empty($heroBanners)): ?>
+    <section id="hero" class="d-flex align-items-center" style="background-image:url('<?= e($heroBanners[0]['image_path']) ?>'); background-size:cover; background-position:center;">
+      <div class="container" data-aos="zoom-out" data-aos-delay="100">
+        <h1>Welcome to <span><?= e($businessName) ?></span></h1>
+        <h2>We are a leading online Fireworks seller in India. Through our agencies we supply to most of the states in India.</h2>
+      </div>
+    </section><!-- End Hero -->
+  <?php else: ?>
+    <section id="hero" class="d-flex align-items-center">
+      <div class="container" data-aos="zoom-out" data-aos-delay="100">
+        <h1>Welcome to <span><?= e($businessName) ?></span></h1>
+        <h2>We are a leading online Fireworks seller in India. Through our agencies we supply to most of the states in India.</h2>
+      </div>
+    </section><!-- End Hero -->
+  <?php endif; ?>
 
   <main id="main">
 
