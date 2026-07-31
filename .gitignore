@@ -1,6 +1,22 @@
 .DS_Store
 .claude/settings.local.json
-uploads/
-logs/
+
+# Uploaded files and logs are generated at runtime; keep the folders and
+# their protection (.htaccess) tracked, ignore only the actual uploaded/log content.
+uploads/*
+!uploads/.htaccess
+!uploads/products/
+uploads/products/*
+!uploads/products/.gitkeep
+!uploads/banners/
+uploads/banners/*
+!uploads/banners/.gitkeep
+!uploads/categories/
+uploads/categories/*
+!uploads/categories/.gitkeep
+
+logs/*
+!logs/.gitkeep
+
 config/database.php
 .env

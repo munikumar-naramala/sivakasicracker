@@ -73,3 +73,25 @@ function csrfVerify(?string $submitted): bool
     return is_string($submitted) && !empty($_SESSION['csrf_token'])
         && hash_equals($_SESSION['csrf_token'], $submitted);
 }
+
+/** Queues a one-time flash message (survives exactly one redirect). */
+function flash(string $type, string $message): void
+{
+    $_SESSION['flash'][] = ['type' => $type, 'message' => $message];
+}
+
+/** Retrieves and clears all queued flash messages. */
+function takeFlashes(): array
+{
+    $flashes = $_SESSION['flash'] ?? [];
+    unset($_SESSION['flash']);
+    return $flashes;
+}
+
+/** URL-safe slug from a name, e.g. for products/categories. */
+function slugify(string $text): string
+{
+    $slug = strtolower(trim($text));
+    $slug = preg_replace('/[^a-z0-9]+/', '-', $slug);
+    return trim($slug, '-');
+}
