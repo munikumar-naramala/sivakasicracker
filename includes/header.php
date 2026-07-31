@@ -48,7 +48,7 @@ function navClass(string $key, string $active): string
         <li><a class="<?= navClass('place-order', $activeNav) ?>" href="place-order.php">
           Place Order<?php if ($cartCount > 0): ?> <span class="cart-badge"><?= (int) $cartCount ?></span><?php endif; ?>
         </a></li>
-        <li><a class="<?= navClass('contact', $activeNav) ?>" href="index.php#contact">Contact</a></li>
+        <li><a class="<?= navClass('contact', $activeNav) ?>" href="contact.php">Contact</a></li>
         <li><a class="<?= navClass('terms', $activeNav) ?>" href="index.php#team">Terms & Conditions</a></li>
       </ul>
       <i class="bi bi-list mobile-nav-toggle"></i>

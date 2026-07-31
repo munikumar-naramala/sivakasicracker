@@ -17,6 +17,10 @@ if (!csrfVerify($_POST['csrf_token'] ?? null)) {
     backToOrderForm('Your session expired, please try again.');
 }
 
+if (RateLimiter::tooManyAttempts('place_order', 5, 300)) {
+    backToOrderForm('Too many orders submitted recently. Please wait a few minutes and try again.');
+}
+
 // Apply any quantity edits made on the cart review page before pricing the order.
 // Quantities are the only client-supplied cart value ever trusted — prices/names
 // always come from Product::findMany() inside Cart::resolve()/Order::createFromCart().

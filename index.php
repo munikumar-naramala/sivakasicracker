@@ -114,6 +114,10 @@ $featuredProducts = Product::getFeatured(8);
           </div>
 
         </div>
+
+        <div class="text-center mt-4">
+          <a href="contact.php" class="btn-add-cart" style="display:inline-flex; text-decoration:none;">Send us a Message</a>
+        </div>
       </div>
     </section>
     <!-- End Contact Section -->
