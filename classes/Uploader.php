@@ -8,9 +8,9 @@
 class Uploader
 {
     private const ALLOWED_MIME = [
-        'image/jpeg' => 'jpg',
-        'image/png'  => 'png',
-        'image/webp' => 'webp',
+        'image/jpeg' => ['ext' => 'jpg', 'decode' => 'imagecreatefromjpeg', 'encode' => 'imagejpeg'],
+        'image/png'  => ['ext' => 'png', 'decode' => 'imagecreatefrompng', 'encode' => 'imagepng'],
+        'image/webp' => ['ext' => 'webp', 'decode' => 'imagecreatefromwebp', 'encode' => 'imagewebp'],
     ];
 
     private const MAX_BYTES = 5 * 1024 * 1024; // 5MB
@@ -37,18 +37,21 @@ class Uploader
             throw new RuntimeException('Only JPG, PNG, or WEBP images are allowed.');
         }
 
-        $image = match ($mime) {
-            'image/jpeg' => @imagecreatefromjpeg($file['tmp_name']),
-            'image/png'  => @imagecreatefrompng($file['tmp_name']),
-            'image/webp' => @imagecreatefromwebp($file['tmp_name']),
-        };
+        $format = self::ALLOWED_MIME[$mime];
+
+        // GD isn't guaranteed to be built with WebP support on every host — fail with a
+        // clear message rather than a fatal error if the functions aren't available.
+        if (!function_exists($format['decode']) || !function_exists($format['encode'])) {
+            throw new RuntimeException('This server cannot process ' . $format['ext'] . ' images. Please try a JPG or PNG instead.');
+        }
+
+        $image = @$format['decode']($file['tmp_name']);
 
         if ($image === false) {
             throw new RuntimeException('The uploaded file is not a valid image.');
         }
 
-        $extension = self::ALLOWED_MIME[$mime];
-        $filename = bin2hex(random_bytes(16)) . '.' . $extension;
+        $filename = bin2hex(random_bytes(16)) . '.' . $format['ext'];
 
         $relativeDir = 'uploads/' . trim($subdirectory, '/');
         $absoluteDir = BASE_PATH . '/' . $relativeDir;
@@ -58,11 +61,8 @@ class Uploader
 
         $destination = $absoluteDir . '/' . $filename;
 
-        $saved = match ($mime) {
-            'image/jpeg' => imagejpeg($image, $destination, 85),
-            'image/png'  => imagepng($image, $destination, 6),
-            'image/webp' => imagewebp($image, $destination, 85),
-        };
+        $quality = $format['ext'] === 'png' ? 6 : 85;
+        $saved = $format['encode']($image, $destination, $quality);
         imagedestroy($image);
 
         if (!$saved) {
