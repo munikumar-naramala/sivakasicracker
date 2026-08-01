@@ -39,8 +39,17 @@ class Mailer
             $headers .= "Cc: {$cc}\r\n";
         }
 
-        // The envelope sender (-f) should match the From domain too, for the same SPF reason.
-        return @mail($to, self::encodeHeader($subject), $html, $headers, '-f' . $fromEmail);
+        // Deliberately NOT passing a -f envelope-sender override here: many shared hosts
+        // (cPanel/Exim especially) reject or silently drop mail() calls that try to set one,
+        // which can turn a spam-folder problem into total non-delivery. Let the server use
+        // its own default envelope sender for the hosting account instead.
+        $sent = @mail($to, self::encodeHeader($subject), $html, $headers);
+
+        if (!$sent) {
+            error_log("Mailer: mail() returned false sending to $to, subject: $subject");
+        }
+
+        return $sent;
     }
 
     private static function render(string $template, array $data): string
