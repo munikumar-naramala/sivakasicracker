@@ -8,7 +8,16 @@
 error_reporting(E_ALL);
 ini_set('display_errors', '0');
 ini_set('log_errors', '1');
-ini_set('error_log', __DIR__ . '/../logs/php-error.log');
+
+// Only redirect logging to our own file if that's actually writable. Blindly
+// overriding error_log to a broken/unwritable path doesn't just fail quietly —
+// it silently discards every error that would otherwise have reached the
+// host's own default error log (e.g. the one visible through cPanel), which
+// is worse than not touching this setting at all.
+$customErrorLog = __DIR__ . '/../logs/php-error.log';
+if (is_writable(dirname($customErrorLog)) || is_writable($customErrorLog)) {
+    ini_set('error_log', $customErrorLog);
+}
 
 define('BASE_PATH', dirname(__DIR__));
 
