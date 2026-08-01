@@ -145,3 +145,23 @@ function slugify(string $text): string
     $slug = preg_replace('/[^a-z0-9]+/', '-', $slug);
     return trim($slug, '-');
 }
+
+/**
+ * Sends the response already built (status/headers/output so far) to the
+ * browser now, then keeps executing PHP afterward. Used so a redirect never
+ * blocks on mail() — which live testing showed can hang unpredictably behind
+ * MilesWeb's outbound spam-filtering appliance — the customer gets their
+ * confirmation page immediately and the emails send afterward regardless of
+ * how long that takes. Call session_write_close() first if the session was
+ * modified, so it doesn't stay locked for the rest of the request. No-ops
+ * safely if the SAPI doesn't support this, in which case the caller's normal
+ * flow (mail before redirect) is what actually happens.
+ */
+function finishResponseAndContinue(): void
+{
+    if (function_exists('fastcgi_finish_request')) {
+        fastcgi_finish_request();
+    } elseif (function_exists('litespeed_finish_request')) {
+        litespeed_finish_request();
+    }
+}

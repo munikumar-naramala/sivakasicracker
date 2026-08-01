@@ -72,6 +72,19 @@ $fullOrder['customer_email'] = $email;
 $fullOrder['customer_mobile'] = $mobile;
 $fullOrder['customer_address'] = $address;
 
+// Only the session that just placed this order may view its confirmation page —
+// order numbers are sequential/guessable and must not expose another customer's
+// name, email, or address to anyone who edits the URL.
+$_SESSION['confirmed_order_numbers'][] = $fullOrder['order_number'];
+
+header('Location: order-placed.php?order=' . urlencode($fullOrder['order_number']));
+
+// The order is safely in the database at this point — everything from here
+// down is "send the confirmation emails," which must never make the customer
+// wait. Flush the redirect to the browser now and keep running afterward.
+session_write_close();
+finishResponseAndContinue();
+
 $emailData = [
     'order'        => $fullOrder,
     'businessName' => Setting::get('business_name'),
@@ -97,10 +110,4 @@ if ($ownerEmail !== '') {
     );
 }
 
-// Only the session that just placed this order may view its confirmation page —
-// order numbers are sequential/guessable and must not expose another customer's
-// name, email, or address to anyone who edits the URL.
-$_SESSION['confirmed_order_numbers'][] = $fullOrder['order_number'];
-
-header('Location: order-placed.php?order=' . urlencode($fullOrder['order_number']));
 exit;

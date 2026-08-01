@@ -36,10 +36,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (empty($errors)) {
             ContactMessage::create($old);
 
-            $ownerEmail = Setting::get('email');
-            if ($ownerEmail !== '') {
-                Mailer::send($ownerEmail, 'New Contact Message' . ($old['subject'] !== '' ? ': ' . $old['subject'] : ''), 'contact-notification', $old);
-            }
+            // Send the notification after the page itself has been delivered to the
+            // visitor (see the finishResponseAndContinue() call near the bottom of
+            // this file) — the "message sent" confirmation must never wait on mail().
+            $notifyData = $old;
 
             $success = true;
             $old = ['name' => '', 'email' => '', 'phone' => '', 'subject' => '', 'message' => ''];
@@ -134,3 +134,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </body>
 
 </html>
+<?php
+if (!empty($notifyData)) {
+    $ownerEmail = Setting::get('email');
+    if ($ownerEmail !== '') {
+        // Page is fully rendered above — flush it to the visitor now, the
+        // notification email must never make "message sent" wait on mail().
+        session_write_close();
+        finishResponseAndContinue();
+
+        Mailer::send(
+            $ownerEmail,
+            'New Contact Message' . ($notifyData['subject'] !== '' ? ': ' . $notifyData['subject'] : ''),
+            'contact-notification',
+            $notifyData
+        );
+    }
+}
