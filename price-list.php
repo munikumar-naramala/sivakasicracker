@@ -22,6 +22,15 @@ if ($searchQuery === '') {
         $grouped[$product['category_name']][] = $product;
     }
 }
+
+// Category-switch requests fetch just the results region via AJAX (see
+// assets/js/cart.js) instead of a full page reload — avoids re-downloading
+// header/footer/vendor CSS+JS and re-running page setup for every click.
+$isAjax = ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') === 'XMLHttpRequest';
+if ($isAjax) {
+    include __DIR__ . '/includes/price-list-results.php';
+    exit;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -55,7 +64,7 @@ if ($searchQuery === '') {
           </div>
         </form>
 
-        <div class="category-chips">
+        <div class="category-chips" data-ajax-nav>
           <a href="price-list.php" class="category-chip <?= $categorySlug === null && $searchQuery === '' ? 'active' : '' ?>">All</a>
           <?php foreach ($categories as $category): ?>
             <a href="price-list.php?category=<?= e($category['slug']) ?>"
@@ -65,25 +74,9 @@ if ($searchQuery === '') {
           <?php endforeach; ?>
         </div>
 
-        <?php if (empty($products)): ?>
-          <p>No products found<?= $searchQuery !== '' ? ' for "' . e($searchQuery) . '"' : '' ?>.</p>
-        <?php elseif ($searchQuery !== ''): ?>
-          <h4 class="mb-3">Search results for "<?= e($searchQuery) ?>"</h4>
-          <div class="product-grid">
-            <?php foreach ($products as $product): ?>
-              <?php include __DIR__ . '/includes/product-card.php'; ?>
-            <?php endforeach; ?>
-          </div>
-        <?php else: ?>
-          <?php foreach ($grouped as $categoryName => $categoryProducts): ?>
-            <h4 class="mt-4 mb-3"><?= e($categoryName) ?> <span class="text-muted">(<?= count($categoryProducts) ?>)</span></h4>
-            <div class="product-grid">
-              <?php foreach ($categoryProducts as $product): ?>
-                <?php include __DIR__ . '/includes/product-card.php'; ?>
-              <?php endforeach; ?>
-            </div>
-          <?php endforeach; ?>
-        <?php endif; ?>
+        <div id="ajax-results">
+          <?php include __DIR__ . '/includes/price-list-results.php'; ?>
+        </div>
 
         <div class="text-center mt-5">
           <a href="place-order.php" class="btn-add-cart" style="display:inline-flex; text-decoration:none;">Go to Place Order</a>

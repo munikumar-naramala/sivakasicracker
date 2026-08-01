@@ -12,6 +12,29 @@
   --muted: #6c757d;
 }
 
+/* ---------- Mobile hero override ----------
+   The BizLand template forces #hero to height:100vh (and 120vh on short
+   viewports) below 768px — fine for a marketing landing page, wrong for a
+   product catalog where people want to reach the price list quickly. This
+   was forcing mobile visitors to scroll past more than one full screen of
+   background image before reaching any real content. Overriding via our own
+   stylesheet (loaded after style.css) rather than editing the vendor file. */
+
+@media (max-width: 768px) {
+  #hero {
+    height: auto;
+    min-height: 0;
+    padding: 90px 0 50px;
+  }
+}
+
+@media (max-height: 500px) {
+  #hero {
+    height: auto;
+    min-height: 0;
+  }
+}
+
 /* ---------- Product grid & cards ---------- */
 
 .product-grid {
@@ -47,9 +70,12 @@
   position: relative;
   aspect-ratio: 1 / 1;
   background: #f4f4f4;
+  overflow: hidden;
 }
 
 .product-card__image img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;

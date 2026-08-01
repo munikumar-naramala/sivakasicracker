@@ -7,6 +7,12 @@ $pageTitle = 'Product Gallery';
 $categorySlug = isset($_GET['category']) ? trim((string) $_GET['category']) : null;
 $products = Product::getAllVisible($categorySlug ?: null);
 $categories = Category::allActive();
+
+$isAjax = ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') === 'XMLHttpRequest';
+if ($isAjax) {
+    include __DIR__ . '/includes/products-show-results.php';
+    exit;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -29,7 +35,7 @@ $categories = Category::allActive();
     <section class="section-bg">
       <div class="container" data-aos="fade-up">
 
-        <div class="category-chips">
+        <div class="category-chips" data-ajax-nav>
           <a href="products-show.php" class="category-chip <?= $categorySlug === null ? 'active' : '' ?>">All</a>
           <?php foreach ($categories as $category): ?>
             <a href="products-show.php?category=<?= e($category['slug']) ?>"
@@ -39,15 +45,9 @@ $categories = Category::allActive();
           <?php endforeach; ?>
         </div>
 
-        <?php if (empty($products)): ?>
-          <p>No products found.</p>
-        <?php else: ?>
-          <div class="product-grid">
-            <?php foreach ($products as $product): ?>
-              <?php include __DIR__ . '/includes/product-card.php'; ?>
-            <?php endforeach; ?>
-          </div>
-        <?php endif; ?>
+        <div id="ajax-results">
+          <?php include __DIR__ . '/includes/products-show-results.php'; ?>
+        </div>
 
       </div>
     </section>

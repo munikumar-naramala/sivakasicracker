@@ -38,7 +38,7 @@ unset($_SESSION['place_order_old_input']);
           <p>Your cart is empty. <a href="price-list.php">Browse the price list</a> to add products.</p>
         <?php else: ?>
 
-        <form method="post" action="processorder.php">
+        <form method="post" action="processorder.php" id="order-form">
           <?= csrfField() ?>
 
           <div class="table-responsive mb-4">
@@ -65,17 +65,22 @@ unset($_SESSION['place_order_old_input']);
                              value="<?= (int) $line['quantity'] ?>" min="0" max="999">
                     </td>
                     <td><?= formatMoney($line['line_total']) ?></td>
-                    <td></td>
+                    <td>
+                      <button type="button" class="btn btn-link p-0 text-danger remove-cart-item"
+                              data-product-id="<?= (int) $line['product_id'] ?>" aria-label="Remove">&times; Remove</button>
+                    </td>
                   </tr>
                 <?php endforeach; ?>
               </tbody>
             </table>
           </div>
 
-          <p class="text-muted">Tip: set a quantity to 0 and click "Place Order" to remove that item.</p>
+          <button type="submit" name="update_cart" value="1" formaction="api/cart-update.php" class="btn btn-outline-secondary mb-4">
+            Update Cart
+          </button>
 
           <div class="cart-summary mb-4">
-            <strong>Subtotal: <?= formatMoney($cartData['subtotal']) ?></strong>
+            <strong id="cart-subtotal">Subtotal: <?= formatMoney($cartData['subtotal']) ?></strong>
             <div class="text-muted" style="font-size:13px;">Final total is calculated at checkout from current prices.</div>
           </div>
 
@@ -100,6 +105,12 @@ unset($_SESSION['place_order_old_input']);
           </div>
 
           <button type="submit" name="place_order" value="1" class="btn-add-cart" style="padding:12px 32px;">Place Order</button>
+        </form>
+
+        <!-- Standalone form used by the per-row Remove buttons via JS (see assets/js/cart.js) -->
+        <form method="post" action="api/cart-update.php" id="remove-item-form" style="display:none;">
+          <?= csrfField() ?>
+          <input type="hidden" name="remove_product_id" id="remove-item-product-id">
         </form>
 
         <?php endif; ?>
