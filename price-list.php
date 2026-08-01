@@ -79,7 +79,7 @@ if ($isAjax) {
         </div>
 
         <div class="text-center mt-5">
-          <a href="place-order.php" class="btn-add-cart" style="display:inline-flex; text-decoration:none;">Go to Place Order</a>
+          <a href="place-order.php" class="btn-add-cart" style="display:inline-flex; text-decoration:none;">Go to Cart</a>
         </div>
 
       </div>

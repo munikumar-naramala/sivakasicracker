@@ -33,7 +33,7 @@ $bank2 = Setting::get('bank2_details');
             <li><i class="bx bx-chevron-right"></i> <a href="index.php#about">About us</a></li>
             <li><i class="bx bx-chevron-right"></i> <a href="index.php#team">Terms & Conditions</a></li>
             <li><i class="bx bx-chevron-right"></i> <a href="price-list.php">Price List</a></li>
-            <li><i class="bx bx-chevron-right"></i> <a href="place-order.php">Place Order</a></li>
+            <li><i class="bx bx-chevron-right"></i> <a href="place-order.php">Cart</a></li>
           </ul>
         </div>
 

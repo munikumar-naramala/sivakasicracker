@@ -2,7 +2,7 @@
 require_once __DIR__ . '/config/config.php';
 
 $activeNav = 'place-order';
-$pageTitle = 'Place Order';
+$pageTitle = 'Cart';
 
 $cartData = Cart::resolve();
 $formError = $_GET['error'] ?? null;
@@ -22,7 +22,7 @@ unset($_SESSION['place_order_old_input']);
 
   <section class="breadcrumbs">
     <div class="container">
-      <h2>Place Order</h2>
+      <h2>Cart</h2>
     </div>
   </section>
 
