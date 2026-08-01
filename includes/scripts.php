@@ -9,4 +9,4 @@
 
 <!-- Template Main JS File -->
 <script src="assets/js/main.js"></script>
-<script src="assets/js/cart.js"></script>
+<script src="<?= e(assetUrl('assets/js/cart.js')) ?>"></script>

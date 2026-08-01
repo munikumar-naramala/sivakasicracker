@@ -3,4 +3,4 @@
 <title><?= e($pageTitle ?? 'Admin') ?> - Admin - Sivakasi Cracker</title>
 <link href="../assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
 <link href="../assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
-<link href="../assets/css/custom.css" rel="stylesheet">
+<link href="../<?= e(assetUrl('assets/css/custom.css')) ?>" rel="stylesheet">

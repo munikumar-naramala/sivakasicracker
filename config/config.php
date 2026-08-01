@@ -89,6 +89,19 @@ function nl(?string $value): string
     return nl2br(e($value));
 }
 
+/**
+ * Appends a cache-busting ?v=<mtime> to an our-own asset path, so edits to
+ * custom.css/cart.js take effect immediately instead of waiting out the
+ * server's 7-day cache-control header on static assets. Only meaningful for
+ * files we actually edit — vendor files never change, so don't bother.
+ */
+function assetUrl(string $path): string
+{
+    $absolute = BASE_PATH . '/' . ltrim($path, '/');
+    $version = is_file($absolute) ? filemtime($absolute) : time();
+    return $path . '?v=' . $version;
+}
+
 /** Returns the current session's CSRF token, generating one if needed. */
 function csrfToken(): string
 {

@@ -30,7 +30,7 @@ $pageTitle = $pageTitle ?? $siteTagline;
 
 <!-- Template + custom CSS -->
 <link href="assets/css/style.css" rel="stylesheet">
-<link href="assets/css/custom.css" rel="stylesheet">
+<link href="<?= e(assetUrl('assets/css/custom.css')) ?>" rel="stylesheet">
 
 <!-- Global site tag (gtag.js) - Google Analytics -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=UA-205878000-1"></script>
