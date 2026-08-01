@@ -11,8 +11,22 @@ ini_set('log_errors', '1');
 ini_set('error_log', __DIR__ . '/../logs/php-error.log');
 
 define('BASE_PATH', dirname(__DIR__));
+
+// Auto-detect the URL base path (e.g. "" at the domain root, "/v2" if deployed
+// under a subdirectory for testing) by comparing the app's filesystem location
+// to the web server's document root. This means SITE_URL is correct both during
+// /v2/ testing and after moving to the root domain, with no manual reconfiguring.
+// realpath() on both sides so this still works if DOCUMENT_ROOT and __DIR__
+// resolve through different symlinks, which cPanel-style hosting often does.
+$documentRoot = rtrim(str_replace('\\', '/', realpath($_SERVER['DOCUMENT_ROOT'] ?? '') ?: ($_SERVER['DOCUMENT_ROOT'] ?? '')), '/');
+$appRoot = str_replace('\\', '/', realpath(BASE_PATH) ?: BASE_PATH);
+$basePath = '';
+if ($documentRoot !== '' && str_starts_with($appRoot, $documentRoot)) {
+    $basePath = substr($appRoot, strlen($documentRoot));
+}
+define('SITE_BASE_PATH', $basePath);
 define('SITE_URL', (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 'https://' : 'http://')
-    . ($_SERVER['HTTP_HOST'] ?? 'localhost'));
+    . ($_SERVER['HTTP_HOST'] ?? 'localhost') . $basePath);
 
 // Uncaught exceptions get logged in full, but visitors only ever see a
 // generic message — never a stack trace or file path.
@@ -36,7 +50,10 @@ if (session_status() === PHP_SESSION_NONE) {
     $isHttps = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
     session_set_cookie_params([
         'lifetime' => 0,
-        'path'     => '/',
+        // Scoped to the app's own path (e.g. "/v2") rather than the whole domain,
+        // so the session cookie doesn't get sent to the old live site at the root
+        // while both are running side by side during testing.
+        'path'     => $basePath !== '' ? $basePath : '/',
         'httponly' => true,
         'secure'   => $isHttps,
         'samesite' => 'Lax',
