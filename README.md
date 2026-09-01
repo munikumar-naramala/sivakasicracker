@@ -2,28 +2,29 @@
 
 Data-driven rewrite of the sivakasicracker.com storefront. See [`docs/`](docs/) for the full modernization plan, database design, and implementation plan.
 
-## Status (as of 2026-07-31)
+## Status (as of 2026-09-01)
 
-**Database:** created on MilesWeb, schema + all 4 seed files imported via phpMyAdmin. Live and populated.
+**🟢 LIVE IN PRODUCTION** at https://sivakasicracker.com — the full data-driven rewrite is deployed at the domain root. The original legacy static site is archived at `/v1` (blocked from public access via `.htaccess`, still reachable through cPanel File Manager/FTP if ever needed). The `/v2` staging folder used during testing has been removed.
 
-**Built and pushed to `main`:**
-- Public site: `index.php`, `price-list.php`, `products-show.php`, `contact.php` — all data-driven, category filters, search, Add to Cart
-- Order flow: `place-order.php` (cart review) → `processorder.php` (server-side pricing, DB persistence) → `order-placed.php` (real order lookup, session-gated so order URLs aren't guessable)
-- Admin panel (`admin/`): auth (+ `setup.php` one-time first-account creation), Dashboard, Products, Categories, Orders, Banners, Settings, Users, Reports, Contact Messages — all modules from the CLAUDE.md spec
-- Security pass: CSRF on every POST handler (verified — none missing), all SQL via PDO prepared statements (verified — no string-concatenated queries), output escaping audited (no unescaped user/DB data found), rate limiting on order/contact/login forms, validated image uploads (MIME allowlist + GD re-encode + random filenames), `.htaccess` protection on `uploads/`, `config/`, `classes/`, `database/`, `templates/`, `logs/`, `includes/`, `admin/includes/` (deny direct web access / no PHP execution), generic error page for uncaught exceptions (no stack traces to visitors)
+**Database:** MilesWeb MySQL (`qjoldyks_sivakasicracker`), schema + seed data imported. Test orders/messages created during the `/v2` testing phase were cleaned out via `database/cleanup_test_data.sql` before cutover.
 
-## TODO — pick up here next session
+**Verified working in production** (not just locally/in testing):
+- Homepage, Price List (177 products, categories, search, AJAX category switching), Product Gallery, Contact form
+- Cart: Add to Cart (AJAX), quantity update, per-item Remove, all instant (no page reload)
+- Full checkout: order creation, server-side pricing, confirmation page — **85ms response time**, decoupled from email sending (see `finishResponseAndContinue()` in `config/config.php`) so mail delivery issues can never freeze checkout
+- HTTPS redirect, `/v1` correctly returns 403, `/v2` correctly returns 404
+- Admin panel: logged in and functioning (owner-confirmed)
+- Security pass: CSRF on every POST handler, all SQL via PDO prepared statements, output escaping audited, rate limiting, validated image uploads, `.htaccess` protection on internal folders
 
-- [ ] **Upload the current code to `public_html`** — nothing has been tested on the live server yet beyond the DB import
-- [ ] Browse the live site (home, price list, product gallery, category filters, search)
-- [ ] Add items to cart and place a real test order end-to-end
-- [ ] Confirm the order confirmation email actually arrives (MilesWeb's `mail()` deliverability is unconfirmed — may need SMTP instead, see `docs/SECURITY_REVIEW.md`)
-- [ ] Run `admin/setup.php` to create the first admin account, then **delete `admin/setup.php` from the server**
-- [ ] Test the full admin panel: add/edit a product (incl. image upload), add/edit a category, update an order status, edit Settings, add a banner, check Reports/CSV export
-- [ ] Confirm MilesWeb's PHP version (code targets PHP 8.0+, avoids 8.1-only syntax defensively, but hasn't been confirmed against the actual host)
-- [ ] Confirm whether cron is available (only needed for future scheduled-report ideas, not a blocker)
+**Known open issue — email deliverability:** order/contact notification emails intermittently get rejected by MilesWeb's outbound spam filter (`550 This message was classified as rSPAM`) — confirmed via cPanel Track Delivery. Root-caused to volume/reputation-based scoring from concentrated test traffic during debugging, not a fixable content/header issue (already tried: domain-matched From/Reply-To, multipart plain-text+HTML, envelope-sender). **Two paths forward, owner's call:** (1) let it settle now that test volume has stopped, or (2) switch to an authenticated transactional email provider (SendGrid/Brevo/Mailgun free tier) for durable delivery independent of the shared IP's reputation. Not yet decided.
+
+## TODO — remaining open items
+
+- [ ] **Decide on the email deliverability path** (wait-and-see vs. transactional email provider) — see above
+- [ ] Delete the production verification test order (`SC-2026-000011`) via Admin → Orders or phpMyAdmin
+- [ ] Full admin panel walkthrough: Products (incl. image upload), Categories, Orders status update, Settings, Banners, Reports/CSV export — owner confirmed admin login works, but individual modules haven't been explicitly walked through yet
 - [ ] Review the auto-assigned product categories via Admin → Products — `seed_products.sql`'s category mapping was a best-effort classification (see `docs/DATABASE_DESIGN.md` §4), not manually verified per product
-- [ ] Once SSL is confirmed working, uncomment the HTTPS-redirect block in the root `.htaccess`
+- [ ] Confirm MilesWeb's PHP version (code targets PHP 8.0+, avoids 8.1-only syntax defensively; site is live and working, so this is effectively confirmed compatible, just not explicitly documented)
 - [ ] Decide whether to keep or further customize the new UI styling (current pass is functional/modern but hasn't had a dedicated design review)
 
 ## Admin Panel
@@ -58,7 +59,7 @@ Once you have one account, sign in and use **Admin → Users** to add staff/admi
 
 ## Deployment
 
-See [`docs/MIGRATION_PLAN.md`](docs/MIGRATION_PLAN.md) for the full cutover checklist. Quick reference:
+The initial go-live cutover is done (see Status above). This section is kept as a reference for any future full redeploy (e.g. a new environment). See [`docs/MIGRATION_PLAN.md`](docs/MIGRATION_PLAN.md) for the full checklist. Quick reference:
 
 1. Copy `config/database.example.php` to `config/database.php` and fill in your real MySQL credentials (this file is gitignored — it lives only on the server, never in git).
 2. Import the four `database/*.sql` files via phpMyAdmin, in order: `schema.sql`, `seed_categories.sql`, `seed_products.sql`, `seed_settings.sql`.
