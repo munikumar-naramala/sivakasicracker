@@ -1,10 +1,11 @@
 <?php
 
 /**
- * Thin wrapper around PHP's mail(). Renders a PHP template (which must escape
- * every interpolated value itself, e.g. via e()/nl()) into an HTML string.
- * If mail() proves unreliable on the MilesWeb shared IP, swap the internals
- * of send() for an SMTP call — callers don't need to change.
+ * Sends mail via an authenticated SMTP relay (Brevo) when config/smtp.php
+ * exists, falling back to PHP's built-in mail() otherwise. The switch to SMTP
+ * happened because MilesWeb's outbound spam filter was intermittently
+ * rejecting mail() sends outright (550 rSPAM) regardless of header/content
+ * fixes — an authenticated relay with its own reputation sidesteps that.
  */
 class Mailer
 {
@@ -18,19 +19,23 @@ class Mailer
         $html = self::render($template, $data);
         $plainText = self::htmlToPlainText($html);
 
-        // The From: address MUST be on the domain this server actually sends mail for.
-        // Using the owner's real Gmail address here (as this used to) makes every message
-        // look spoofed to Gmail's own SPF/DKIM checks — MilesWeb's mail server has no
-        // authorization to send as @gmail.com — and lands straight in spam. The real
-        // business address goes in Reply-To instead, so replies still reach the right inbox.
-        $domain = preg_replace('/^www\./', '', explode(':', $_SERVER['HTTP_HOST'] ?? 'localhost')[0]);
-        $fromEmail = 'noreply@' . $domain;
         $fromName = Setting::get('business_name', 'Sivakasi Cracker');
         $replyTo = Setting::get('email');
 
+        $smtpConfig = self::loadSmtpConfig();
+        $domain = preg_replace('/^www\./', '', explode(':', $_SERVER['HTTP_HOST'] ?? 'localhost')[0]);
+        // The From: address MUST be on a domain the sending route is actually
+        // authorized for. Via SMTP that's whatever config/smtp.php declares
+        // (Brevo is authorized to send as it, independent of this server's
+        // domain); via mail() it must be this server's own domain — using the
+        // owner's real Gmail address here (as this used to) makes every message
+        // look spoofed to Gmail's own SPF/DKIM checks and lands straight in spam.
+        // Either way the real business address goes in Reply-To so replies land
+        // in the right inbox.
+        $fromEmail = $smtpConfig['from_email'] ?? ('noreply@' . $domain);
+
         // multipart/alternative with a real plain-text part, not HTML-only — sending
-        // HTML with no plain-text fallback is itself a well-known spam-scoring signal,
-        // separate from the sender-authentication issues already fixed above.
+        // HTML with no plain-text fallback is itself a well-known spam-scoring signal.
         $boundary = 'b_' . bin2hex(random_bytes(16));
 
         $headers = "MIME-Version: 1.0\r\n";
@@ -55,6 +60,38 @@ class Mailer
         $body .= $html . "\r\n\r\n";
         $body .= "--{$boundary}--";
 
+        if ($smtpConfig !== null) {
+            return self::sendViaSmtp($smtpConfig, $to, $fromEmail, $fromName, $subject, $headers, $body);
+        }
+
+        return self::sendViaMail($to, $subject, $headers, $body);
+    }
+
+    private static function sendViaSmtp(array $config, string $to, string $fromEmail, string $fromName, string $subject, string $headers, string $body): bool
+    {
+        $messageIdDomain = substr(strrchr($fromEmail, '@'), 1) ?: 'localhost';
+
+        $fullHeaders = 'From: ' . self::encodeHeader($fromName) . " <{$fromEmail}>\r\n"
+            . 'To: ' . "<{$to}>\r\n"
+            . 'Subject: ' . self::encodeHeader($subject) . "\r\n"
+            . 'Date: ' . date(DATE_RFC2822) . "\r\n"
+            . 'Message-ID: <' . bin2hex(random_bytes(16)) . '@' . $messageIdDomain . ">\r\n"
+            // $headers already has From/Reply-To/Cc/MIME/Content-Type — strip the
+            // duplicate From we just added above to avoid two From: lines.
+            . preg_replace('/^From:.*\r\n/', '', $headers);
+
+        try {
+            $client = new SmtpClient($config['host'], $config['port'], $config['username'], $config['password']);
+            $client->send($fromEmail, $to, $fullHeaders . "\r\n" . $body);
+            return true;
+        } catch (Throwable $e) {
+            error_log('Mailer (SMTP): failed sending to ' . $to . ' — ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    private static function sendViaMail(string $to, string $subject, string $headers, string $body): bool
+    {
         // Deliberately NOT passing a -f envelope-sender override here: many shared hosts
         // (cPanel/Exim especially) reject or silently drop mail() calls that try to set one,
         // which can turn a spam-folder problem into total non-delivery. Let the server use
@@ -62,10 +99,23 @@ class Mailer
         $sent = @mail($to, self::encodeHeader($subject), $body, $headers);
 
         if (!$sent) {
-            error_log("Mailer: mail() returned false sending to $to, subject: $subject");
+            error_log("Mailer (mail()): returned false sending to $to, subject: $subject");
         }
 
         return $sent;
+    }
+
+    private static function loadSmtpConfig(): ?array
+    {
+        $path = BASE_PATH . '/config/smtp.php';
+        if (!is_file($path)) {
+            return null;
+        }
+        $config = require $path;
+        if (empty($config['username']) || empty($config['password'])) {
+            return null;
+        }
+        return $config;
     }
 
     /** Best-effort plain-text fallback derived from a rendered HTML email. */
