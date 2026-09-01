@@ -2,8 +2,7 @@
 # the only way to browse anything here).
 Options -Indexes
 
-# Force HTTPS once SSL is confirmed working on the MilesWeb account
-# (see docs/MIGRATION_PLAN.md pre-migration checklist) — uncomment then:
-# RewriteEngine On
-# RewriteCond %{HTTPS} off
-# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+# Force HTTPS — confirmed working on the MilesWeb account as of the go-live cutover.
+RewriteEngine On
+RewriteCond %{HTTPS} off
+RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]

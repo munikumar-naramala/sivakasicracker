@@ -1,0 +1,19 @@
+This is NOT deployed automatically — it's a reference for a file you create
+manually inside the /v1 folder on the server (via cPanel File Manager) after
+moving the old site's files there, per the go-live cutover plan.
+
+Create a new file named exactly ".htaccess" inside /v1/ containing:
+
+------------------------------------------------------------
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+    Order deny,allow
+    Deny from all
+</IfModule>
+------------------------------------------------------------
+
+This blocks all public web access to everything under /v1/ (the archived old
+site), while leaving the files intact and still accessible to you via File
+Manager/FTP if you ever need to look at them again.
