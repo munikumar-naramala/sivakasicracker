@@ -16,12 +16,18 @@ Data-driven rewrite of the sivakasicracker.com storefront. See [`docs/`](docs/) 
 - Admin panel: logged in and functioning (owner-confirmed)
 - Security pass: CSRF on every POST handler, all SQL via PDO prepared statements, output escaping audited, rate limiting, validated image uploads, `.htaccess` protection on internal folders
 
-**Known open issue — email deliverability:** order/contact notification emails intermittently get rejected by MilesWeb's outbound spam filter (`550 This message was classified as rSPAM`) — confirmed via cPanel Track Delivery. Root-caused to volume/reputation-based scoring from concentrated test traffic during debugging, not a fixable content/header issue (already tried: domain-matched From/Reply-To, multipart plain-text+HTML, envelope-sender). **Two paths forward, owner's call:** (1) let it settle now that test volume has stopped, or (2) switch to an authenticated transactional email provider (SendGrid/Brevo/Mailgun free tier) for durable delivery independent of the shared IP's reputation. Not yet decided.
+**Known open issue — email deliverability (still unresolved as of 2026-09-01 evening):**
+- Raw `mail()` via MilesWeb: unreliable — intermittently rejected with `550 This message was classified as rSPAM` regardless of header/content fixes (domain-matched From/Reply-To, multipart plain-text+HTML, envelope-sender all tried).
+- Switched to **Brevo SMTP** (`classes/SmtpClient.php`, dependency-free, no PHPMailer/Composer): initially failed with "sender not valid" — Brevo requires verified sender identity.
+- **Full domain authentication completed and independently verified**: all 4 DNS records (Brevo ownership code, `brevo1._domainkey`/`brevo2._domainkey` DKIM CNAMEs, `_dmarc` TXT) confirmed live via direct public DNS lookup (Google DoH), not just Brevo's own claim — see conversation history for the exact record values if this needs re-checking.
+- **Even with domain auth fully verified, test orders `SC-2026-000016` and `SC-2026-000018` (sent via the domain-authenticated Brevo SMTP, from_email=`noreply@sivakasicracker.com`) still were not received** as of the last check. Not yet diagnosed further — owner is checking Gmail's Promotions/Updates/All Mail tabs (not just Primary/Spam) and **Brevo's own Transactional → Logs** for those specific order numbers tomorrow, which will show definitively whether Brevo even received the send request from our code, or received it and it's a Gmail-side delivery issue, or Brevo itself is blocking/bouncing with a specific reason. That log status is the critical next data point — check it first before trying anything else.
+- `config/smtp.php` currently holds live Brevo credentials with `from_email = noreply@sivakasicracker.com` (gitignored, not in git — recreate from `config/smtp.example.php` + credentials in prior conversation history if ever lost). Deleting/emptying it makes `Mailer.php` fall back to `mail()` automatically, no code change needed.
 
 ## TODO — remaining open items
 
-- [ ] **Decide on the email deliverability path** (wait-and-see vs. transactional email provider) — see above
-- [ ] Delete the production verification test order (`SC-2026-000011`) via Admin → Orders or phpMyAdmin
+- [ ] **Check Brevo → Transactional → Logs for orders SC-2026-000016/000018** — this is the critical next step, see above
+- [ ] Also check Gmail's Promotions/Updates/All Mail tabs, not just Primary/Spam
+- [ ] Delete test orders `SC-2026-000011` through `SC-2026-000018` via Admin → Orders or phpMyAdmin once email debugging is done (leave them until then, they're useful for correlating with Brevo's logs by timestamp)
 - [ ] Full admin panel walkthrough: Products (incl. image upload), Categories, Orders status update, Settings, Banners, Reports/CSV export — owner confirmed admin login works, but individual modules haven't been explicitly walked through yet
 - [ ] Review the auto-assigned product categories via Admin → Products — `seed_products.sql`'s category mapping was a best-effort classification (see `docs/DATABASE_DESIGN.md` §4), not manually verified per product
 - [ ] Confirm MilesWeb's PHP version (code targets PHP 8.0+, avoids 8.1-only syntax defensively; site is live and working, so this is effectively confirmed compatible, just not explicitly documented)
