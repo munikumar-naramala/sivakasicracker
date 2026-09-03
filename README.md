@@ -2,7 +2,7 @@
 
 Data-driven rewrite of the sivakasicracker.com storefront. See [`docs/`](docs/) for the full modernization plan, database design, and implementation plan.
 
-## Status (as of 2026-09-01)
+## Status (as of 2026-09-02)
 
 **🟢 LIVE IN PRODUCTION** at https://sivakasicracker.com — the full data-driven rewrite is deployed at the domain root. The original legacy static site is archived at `/v1` (blocked from public access via `.htaccess`, still reachable through cPanel File Manager/FTP if ever needed). The `/v2` staging folder used during testing has been removed.
 
@@ -16,18 +16,12 @@ Data-driven rewrite of the sivakasicracker.com storefront. See [`docs/`](docs/) 
 - Admin panel: logged in and functioning (owner-confirmed)
 - Security pass: CSRF on every POST handler, all SQL via PDO prepared statements, output escaping audited, rate limiting, validated image uploads, `.htaccess` protection on internal folders
 
-**Known open issue — email deliverability (still unresolved as of 2026-09-01 evening):**
-- Raw `mail()` via MilesWeb: unreliable — intermittently rejected with `550 This message was classified as rSPAM` regardless of header/content fixes (domain-matched From/Reply-To, multipart plain-text+HTML, envelope-sender all tried).
-- Switched to **Brevo SMTP** (`classes/SmtpClient.php`, dependency-free, no PHPMailer/Composer): initially failed with "sender not valid" — Brevo requires verified sender identity.
-- **Full domain authentication completed and independently verified**: all 4 DNS records (Brevo ownership code, `brevo1._domainkey`/`brevo2._domainkey` DKIM CNAMEs, `_dmarc` TXT) confirmed live via direct public DNS lookup (Google DoH), not just Brevo's own claim — see conversation history for the exact record values if this needs re-checking.
-- **Even with domain auth fully verified, test orders `SC-2026-000016` and `SC-2026-000018` (sent via the domain-authenticated Brevo SMTP, from_email=`noreply@sivakasicracker.com`) still were not received** as of the last check. Not yet diagnosed further — owner is checking Gmail's Promotions/Updates/All Mail tabs (not just Primary/Spam) and **Brevo's own Transactional → Logs** for those specific order numbers tomorrow, which will show definitively whether Brevo even received the send request from our code, or received it and it's a Gmail-side delivery issue, or Brevo itself is blocking/bouncing with a specific reason. That log status is the critical next data point — check it first before trying anything else.
-- `config/smtp.php` currently holds live Brevo credentials with `from_email = noreply@sivakasicracker.com` (gitignored, not in git — recreate from `config/smtp.example.php` + credentials in prior conversation history if ever lost). Deleting/emptying it makes `Mailer.php` fall back to `mail()` automatically, no code change needed.
+**Email deliverability — RESOLVED (2026-09-02):** order `SC-2026-000019` confirmation email confirmed received at the test address after full Brevo domain authentication. Path that got here, for future reference: raw `mail()` via MilesWeb was unreliable (`550 rSPAM`, unfixable via headers/content alone) → switched to Brevo SMTP (`classes/SmtpClient.php`, dependency-free) → initial "sender not valid" error → completed full domain authentication (SPF/DKIM/DMARC — all 4 DNS records independently verified via public DNS, not just Brevo's claim) → delivery confirmed working. `config/smtp.php` on the server holds the live Brevo credentials with `from_email = noreply@sivakasicracker.com` (gitignored — recreate from `config/smtp.example.php` + credentials in conversation history if ever lost). If SMTP ever needs disabling, deleting/emptying `config/smtp.php` makes `Mailer.php` fall back to `mail()` automatically, no code change needed.
 
 ## TODO — remaining open items
 
-- [ ] **Check Brevo → Transactional → Logs for orders SC-2026-000016/000018** — this is the critical next step, see above
-- [ ] Also check Gmail's Promotions/Updates/All Mail tabs, not just Primary/Spam
-- [ ] Delete test orders `SC-2026-000011` through `SC-2026-000018` via Admin → Orders or phpMyAdmin once email debugging is done (leave them until then, they're useful for correlating with Brevo's logs by timestamp)
+- [ ] Confirm order 19's email landed in the primary inbox (not spam/promotions) — if it did, place one or two more real-feeling test orders over the next few days to confirm consistency, not just a one-off success
+- [ ] Delete test orders `SC-2026-000011` through `SC-2026-000019` via Admin → Orders or phpMyAdmin now that email debugging is done
 - [ ] Full admin panel walkthrough: Products (incl. image upload), Categories, Orders status update, Settings, Banners, Reports/CSV export — owner confirmed admin login works, but individual modules haven't been explicitly walked through yet
 - [ ] Review the auto-assigned product categories via Admin → Products — `seed_products.sql`'s category mapping was a best-effort classification (see `docs/DATABASE_DESIGN.md` §4), not manually verified per product
 - [ ] Confirm MilesWeb's PHP version (code targets PHP 8.0+, avoids 8.1-only syntax defensively; site is live and working, so this is effectively confirmed compatible, just not explicitly documented)
