@@ -88,8 +88,8 @@ unset($_SESSION['place_order_old_input']);
             </table>
           </div>
 
-          <div class="cart-summary mb-4">
-            <strong id="cart-subtotal">Subtotal: <?= formatMoney($cartData['subtotal']) ?></strong>
+          <div class="cart-summary mb-4 text-end">
+            <strong id="cart-subtotal" style="font-size:18px;">Subtotal: <?= formatMoney($cartData['subtotal']) ?></strong>
             <div class="text-muted" style="font-size:13px;">Final total is calculated at checkout from current prices.</div>
           </div>
 
