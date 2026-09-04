@@ -7,10 +7,12 @@ function respond(bool $success, string $message, bool $isAjax, ?string $redirect
 {
     if ($isAjax) {
         header('Content-Type: application/json');
+        $cart = Cart::resolve();
         echo json_encode([
             'success'    => $success,
             'message'    => $message,
             'cart_count' => Cart::count(),
+            'subtotal'   => $cart['subtotal'],
         ]);
         exit;
     }

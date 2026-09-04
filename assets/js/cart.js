@@ -1,11 +1,38 @@
 /**
- * Quantity steppers + progressive-enhancement Add to Cart.
- * Forms with class "add-to-cart-form" submit normally (full page reload,
- * works without JS) unless fetch succeeds, in which case we update the
- * cart badge in place instead.
+ * Quantity steppers + progressive-enhancement Add to Cart, plus the cart
+ * review page's instant remove/quantity-update and the AJAX category-chip
+ * switching on price-list.php / products-show.php.
  */
 (function () {
   'use strict';
+
+  /** Keeps the nav badge and floating cart summary in sync after any AJAX cart change. */
+  function updateCartWidgets(data) {
+    document.querySelectorAll('.cart-badge').forEach(function (badge) {
+      badge.textContent = data.cart_count;
+      badge.style.display = data.cart_count > 0 ? '' : 'none';
+    });
+
+    var floatEl = document.getElementById('cart-float');
+    if (floatEl && typeof data.subtotal !== 'undefined') {
+      var countEl = document.getElementById('cart-float-count');
+      var totalEl = document.getElementById('cart-float-total');
+      if (countEl) countEl.textContent = data.cart_count + (data.cart_count === 1 ? ' item' : ' items');
+      if (totalEl) totalEl.textContent = '₹' + Number(data.subtotal).toFixed(2);
+      floatEl.style.display = data.cart_count > 0 ? '' : 'none';
+    }
+  }
+
+  function cartCsrfToken() {
+    var field = document.querySelector('#remove-item-form [name="csrf_token"]');
+    return field ? field.value : '';
+  }
+
+  // Quantity steppers. On the cart page (.cart-qty-stepper) a change also
+  // pushes an instant AJAX update — no separate "Update Cart" button needed,
+  // matching how Remove already works. Elsewhere (e.g. an add-to-cart form
+  // that hasn't been submitted yet) it's purely local until Add to Cart.
+  var qtyUpdateTimers = {};
 
   document.addEventListener('click', function (event) {
     var btn = event.target.closest('.qty-stepper button');
@@ -23,7 +50,53 @@
     if (btn.classList.contains('qty-decrease')) value = Math.max(min, value - 1);
 
     input.value = value;
+
+    if (!stepper.classList.contains('cart-qty-stepper')) return;
+
+    var productId = stepper.dataset.productId;
+    clearTimeout(qtyUpdateTimers[productId]);
+    qtyUpdateTimers[productId] = setTimeout(function () {
+      updateCartQuantity(productId, value, stepper);
+    }, 450);
   });
+
+  function updateCartQuantity(productId, quantity, stepper) {
+    var formData = new FormData();
+    formData.append('csrf_token', cartCsrfToken());
+    formData.append('quantity[' + productId + ']', quantity);
+
+    fetch('api/cart-update.php', {
+      method: 'POST',
+      body: formData,
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+    })
+      .then(function (response) { return response.json(); })
+      .then(function (data) {
+        updateCartWidgets(data);
+
+        if (quantity === 0) {
+          var row = stepper.closest('tr');
+          if (row) row.remove();
+        } else {
+          var line = (data.lines || []).find(function (l) { return String(l.product_id) === String(productId); });
+          var row2 = stepper.closest('tr');
+          if (line && row2) {
+            var totalCell = row2.querySelector('.cart-line-total');
+            if (totalCell) totalCell.textContent = '₹' + Number(line.line_total).toFixed(2);
+          }
+        }
+
+        var subtotalEl = document.getElementById('cart-subtotal');
+        if (subtotalEl) subtotalEl.textContent = 'Subtotal: ₹' + Number(data.subtotal).toFixed(2);
+
+        if (!data.lines || data.lines.length === 0) {
+          window.location.reload();
+        }
+      })
+      .catch(function () {
+        window.location.reload();
+      });
+  }
 
   document.addEventListener('submit', function (event) {
     var form = event.target;
@@ -43,10 +116,7 @@
           alert(data.message || 'Could not add to cart.');
           return;
         }
-        document.querySelectorAll('.cart-badge').forEach(function (badge) {
-          badge.textContent = data.cart_count;
-          badge.style.display = data.cart_count > 0 ? '' : 'none';
-        });
+        updateCartWidgets(data);
 
         var btn = form.querySelector('.btn-add-cart');
         if (btn) {
@@ -83,10 +153,7 @@
     })
       .then(function (response) { return response.json(); })
       .then(function (data) {
-        document.querySelectorAll('.cart-badge').forEach(function (badge) {
-          badge.textContent = data.cart_count;
-          badge.style.display = data.cart_count > 0 ? '' : 'none';
-        });
+        updateCartWidgets(data);
 
         if (!data.lines || data.lines.length === 0) {
           window.location.reload();

@@ -247,6 +247,61 @@
   transform: scale(1.08);
 }
 
+/* ---------- Floating cart summary ----------
+   Total amount must stay visible at all times (not icon-only, not
+   hover/tap-to-reveal) — shoppers should see it building up as they browse,
+   on every screen size, without needing to interact with it first. */
+
+.cart-float {
+  position: fixed;
+  left: 20px;
+  bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px 10px 14px;
+  border-radius: 100px;
+  background: #1f2430;
+  color: #fff;
+  text-decoration: none;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  z-index: 999;
+  transition: transform 0.2s ease;
+}
+
+.cart-float:hover {
+  color: #fff;
+  transform: scale(1.04);
+}
+
+.cart-float i {
+  font-size: 22px;
+  color: var(--accent);
+}
+
+.cart-float__info {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.cart-float__count {
+  font-size: 11px;
+  color: #cfd3dc;
+}
+
+.cart-float__total {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+@media (max-width: 575px) {
+  /* WhatsApp is on the right, cart on the left — both stay fully labeled,
+     just pulled in slightly so they don't crowd a narrow screen. */
+  .cart-float { left: 12px; bottom: 12px; padding: 8px 14px 8px 12px; }
+  .whatsapp-float { right: 12px; bottom: 12px; width: 50px; height: 50px; font-size: 24px; }
+}
+
 /* ---------- Cart / order review table ---------- */
 
 .cart-table img { width: 56px; height: 56px; object-fit: cover; border-radius: 4px; }

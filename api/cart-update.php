@@ -34,7 +34,8 @@ if (isset($_POST['remove_product_id'])) {
     }
 }
 
-// Bulk quantity update (from the cart review table's "Update Cart" button) — 0 removes the line.
+// Quantity update(s) — fired automatically by the cart page's quantity
+// steppers (see assets/js/cart.js), not a manual submit. 0 removes the line.
 $submittedQuantities = $_POST['quantity'] ?? [];
 if (is_array($submittedQuantities)) {
     foreach ($submittedQuantities as $productId => $quantity) {

@@ -43,28 +43,41 @@ unset($_SESSION['place_order_old_input']);
 
           <div class="table-responsive mb-4">
             <table class="table cart-table align-middle">
+              <colgroup>
+                <col style="width:auto;">
+                <col style="width:110px;">
+                <col style="width:110px;">
+                <col style="width:110px;">
+                <col style="width:90px;">
+              </colgroup>
               <thead>
                 <tr>
                   <th>Item</th>
-                  <th>Unit Price</th>
-                  <th>Quantity</th>
-                  <th>Total</th>
+                  <th class="text-end">Unit Price</th>
+                  <th class="text-center">Quantity</th>
+                  <th class="text-end">Total</th>
                   <th></th>
                 </tr>
               </thead>
               <tbody>
                 <?php foreach ($cartData['lines'] as $line): ?>
                   <tr>
-                    <td class="d-flex align-items-center gap-2">
-                      <img src="<?= e($line['image_path']) ?>" alt="">
-                      <?= e($line['name']) ?>
+                    <td>
+                      <div class="d-flex align-items-center gap-2">
+                        <img src="<?= e($line['image_path']) ?>" alt="">
+                        <?= e($line['name']) ?>
+                      </div>
                     </td>
-                    <td><?= formatMoney($line['unit_price']) ?></td>
-                    <td style="max-width:90px;">
-                      <input type="number" class="form-control" name="quantity[<?= (int) $line['product_id'] ?>]"
-                             value="<?= (int) $line['quantity'] ?>" min="0" max="999">
+                    <td class="text-end"><?= formatMoney($line['unit_price']) ?></td>
+                    <td>
+                      <div class="qty-stepper cart-qty-stepper" data-product-id="<?= (int) $line['product_id'] ?>">
+                        <button type="button" class="qty-decrease" aria-label="Decrease quantity">&minus;</button>
+                        <input type="number" name="quantity[<?= (int) $line['product_id'] ?>]" class="cart-qty-input"
+                               value="<?= (int) $line['quantity'] ?>" min="0" max="999" readonly>
+                        <button type="button" class="qty-increase" aria-label="Increase quantity">&plus;</button>
+                      </div>
                     </td>
-                    <td><?= formatMoney($line['line_total']) ?></td>
+                    <td class="text-end fw-bold cart-line-total"><?= formatMoney($line['line_total']) ?></td>
                     <td>
                       <button type="button" class="btn btn-link p-0 text-danger remove-cart-item"
                               data-product-id="<?= (int) $line['product_id'] ?>" aria-label="Remove">&times; Remove</button>
@@ -74,10 +87,6 @@ unset($_SESSION['place_order_old_input']);
               </tbody>
             </table>
           </div>
-
-          <button type="submit" name="update_cart" value="1" formaction="api/cart-update.php" class="btn btn-outline-secondary mb-4">
-            Update Cart
-          </button>
 
           <div class="cart-summary mb-4">
             <strong id="cart-subtotal">Subtotal: <?= formatMoney($cartData['subtotal']) ?></strong>

@@ -8,6 +8,13 @@ $email = Setting::get('email');
 $footerText = Setting::get('footer_text', $businessName . '. All Rights Reserved');
 $bank1 = Setting::get('bank1_details');
 $bank2 = Setting::get('bank2_details');
+
+// Floating cart summary — so shoppers see their running total on every page,
+// not just when they reach the cart. Skipped on the cart page itself (no
+// point floating a summary of the page you're already looking at).
+$showCartFloat = class_exists('Cart') && basename($_SERVER['SCRIPT_NAME']) !== 'place-order.php';
+$cartFloatData = $showCartFloat ? Cart::resolve() : ['lines' => [], 'subtotal' => 0.0];
+$cartFloatCount = array_sum(array_column($cartFloatData['lines'], 'quantity'));
 ?>
 <!-- ======= Footer ======= -->
 <footer id="footer">
@@ -64,5 +71,15 @@ $bank2 = Setting::get('bank2_details');
 <?php if ($whatsapp !== ''): ?>
 <a href="https://wa.me/<?= e($whatsapp) ?>" class="whatsapp-float" target="_blank" rel="noopener" aria-label="Chat on WhatsApp">
   <i class="bi bi-whatsapp"></i>
+</a>
+<?php endif; ?>
+
+<?php if ($showCartFloat): ?>
+<a href="place-order.php" class="cart-float" id="cart-float" style="<?= $cartFloatCount > 0 ? '' : 'display:none;' ?>">
+  <i class="bi bi-cart3"></i>
+  <span class="cart-float__info">
+    <span class="cart-float__count" id="cart-float-count"><?= (int) $cartFloatCount ?> item<?= $cartFloatCount === 1 ? '' : 's' ?></span>
+    <span class="cart-float__total" id="cart-float-total"><?= formatMoney($cartFloatData['subtotal']) ?></span>
+  </span>
 </a>
 <?php endif; ?>
